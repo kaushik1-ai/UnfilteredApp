@@ -26,6 +26,19 @@ The application uses the device microphone as a sensor for voice-based journalin
 ### Location / Maps
 Google Maps integration has been initiated using a static map API to display location-based content. Basic map rendering is implemented, serving as a foundation for future interactive and location-aware features.
 
+## Responsible Use of AI 
+Practical Use in Development -
+Debugging Compose navigation & state issues
+Understanding StateFlow + ViewModel usage
+
+Critical Filtering -
+Rejected generic or irrelevant suggestions
+Verified outputs before applying
+Adapted solutions to fit NavHost + MVVM structure
+
+Controlled Usage -
+AI used as a support tool, not a replacement
+Final decisions and implementation done manually
 
 ## Screenshots 
 <img width="300" height="600" alt="Screenshot_20260407_154250" src="https://github.com/user-attachments/assets/45d6ef45-a7eb-478a-acf0-d9baaa12e305" />
