@@ -13,6 +13,7 @@ sealed class AuthState {
     object Loading : AuthState()
     object RegistrationSuccess : AuthState()
     object LoginSuccess : AuthState()
+    object LoggedOut : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
@@ -40,6 +41,11 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 _authState.value = AuthState.Error(e.message ?: "An error occurred")
             }
         }
+    }
+
+    fun logout() {
+        repository.clearToken()
+        _authState.value = AuthState.LoggedOut
     }
 
     fun register(email: String, password: String) {

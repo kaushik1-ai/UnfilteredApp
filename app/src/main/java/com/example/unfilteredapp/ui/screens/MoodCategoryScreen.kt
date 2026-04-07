@@ -3,7 +3,12 @@ package com.example.unfilteredapp.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,10 +20,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoodCategoryScreen(
     onCategorySelected: (String) -> Unit,
-    onBack: () -> Unit
+    onLogout: () -> Unit
 ) {
     val categories = listOf(
         MoodCategoryItem("High Energy + Pleasant", "high_energy_pleasant", Color(0xFFFBDA63), Color(0xFFFBB140)),
@@ -27,26 +33,33 @@ fun MoodCategoryScreen(
         MoodCategoryItem("High Energy + Unpleasant", "high_energy_unpleasant", Color(0xFFF83700), Color(0xFFBF2A00))
     )
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("How do you feel?", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = onLogout) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                    }
+                }
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "How do you feel?",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 32.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(1),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                modifier = Modifier.fillMaxSize()
             ) {
-                categories.forEach { category ->
+                items(categories) { category ->
                     CategoryCard(category) {
                         onCategorySelected(category.modeType)
                     }

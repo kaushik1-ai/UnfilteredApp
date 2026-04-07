@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -28,9 +27,8 @@ import androidx.navigation.toRoute
 import com.example.unfilteredapp.data.repository.AuthRepository
 import com.example.unfilteredapp.ui.screens.*
 import com.example.unfilteredapp.ui.theme.UnfilteredAppTheme
+import com.example.unfilteredapp.viewmodel.AuthState
 import com.example.unfilteredapp.viewmodel.AuthViewModel
-import com.example.unfilteredapp.viewmodel.JournalViewModel
-import com.example.unfilteredapp.viewmodel.MoodViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -100,6 +98,17 @@ fun MainContainer() {
         }
     )
 
+    val authState by authViewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.LoggedOut) {
+            navController.navigate(Screen.Login) {
+                popUpTo(0) { inclusive = true }
+            }
+            authViewModel.resetState()
+        }
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -117,7 +126,7 @@ fun MainContainer() {
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            AppNavigation(navController, authViewModel, repository)
+            AppNavigation(navController, authViewModel)
         }
     }
 }
@@ -161,8 +170,7 @@ fun CustomBottomAppBar(navController: androidx.navigation.NavHostController) {
 @Composable
 fun AppNavigation(
     navController: androidx.navigation.NavHostController,
-    authViewModel: AuthViewModel,
-    repository: AuthRepository
+    authViewModel: AuthViewModel
 ) {
     val journalViewModel: JournalViewModel = viewModel()
     val moodViewModel: MoodViewModel = viewModel()
@@ -200,7 +208,7 @@ fun AppNavigation(
                 onCategorySelected = { modeType ->
                     navController.navigate(Screen.MoodSubSelection(modeType))
                 },
-                onBack = { }
+                onLogout = { authViewModel.logout() }
             )
         }
         composable<Screen.MoodSubSelection> { backStackEntry ->
