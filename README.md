@@ -1,4 +1,7 @@
-**UPDATE 1**
+
+## UNFILTERED
+
+### UPDATE 1
 
 ## Core App Functionality & Compose UI
 The app is developed using Jetpack Compose with multiple screens such as Journal, Mood, Music, Rooms, and Detox, all connected through Navigation Compose. It uses Scaffold for overall layout structure and LazyColumn for displaying dynamic journal entries efficiently. Material 3 components such as NavigationBar, Cards, Buttons, and OutlinedTextField help create a clean, modern, and user-friendly UI.
@@ -9,7 +12,7 @@ The application follows a basic MVVM architecture, where ViewModels such as Jour
 ## Navigation & App Flow
 Navigation is implemented using Navigation Compose with a sealed Screen class for type-safe routing. The app provides a smooth and logical flow from authentication screens to core features, with arguments such as mood type passed between screens where needed. A bottom navigation bar enables intuitive and seamless switching between the main sections of the app.
 
-## Q1.4 Integration Progress Toward Requirements
+## Integration Progress Toward Requirements
 
 ### API Integration
 Basic backend API integration has been implemented using REST endpoints for authentication. The app communicates with endpoints such as `/register`, `/login`, and `/me`, establishing a working foundation for user authentication and data exchange.
