@@ -1,5 +1,6 @@
 package com.example.unfilteredapp.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -153,22 +154,34 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    error?.let {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(it, modifier = Modifier.padding(12.dp), color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 12.sp)
+                    AnimatedVisibility(
+                        visible = error != null,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        val errorMessage = error
+                        if (errorMessage != null) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(errorMessage, modifier = Modifier.padding(12.dp), color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 12.sp)
+                            }
                         }
                     }
                 }
-                items(messages) { message ->
+                items(
+                    items = messages,
+                    key = { it.id ?: it.hashCode() } // Non-null key required
+                ) { message ->
                     val isMine = message.effectiveUserId == currentUserId
-                    ModernMessageBubble(
-                        message = message,
-                        isMine = isMine
-                    )
+                    Box(modifier = Modifier.animateItem()) {
+                        ModernMessageBubble(
+                            message = message,
+                            isMine = isMine
+                        )
+                    }
                 }
             }
         }

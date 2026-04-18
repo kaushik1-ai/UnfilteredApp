@@ -15,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -35,12 +37,14 @@ import com.example.unfilteredapp.viewmodel.AuthState
 import com.example.unfilteredapp.viewmodel.AuthViewModel
 import com.example.unfilteredapp.viewmodel.MoodAnalyticsViewModel
 import com.example.unfilteredapp.data.repository.MoodRepository
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import com.example.unfilteredapp.data.repository.JournalRepository
 import com.example.unfilteredapp.viewmodel.JournalViewModel
 import com.example.unfilteredapp.viewmodel.ChatViewModel
 import com.example.unfilteredapp.data.repository.ChatRepository
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -69,6 +73,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Serializable sealed interface Screen {
+    @Serializable data object Splash : Screen
     @Serializable data object Login : Screen
     @Serializable data object Signup : Screen
     @Serializable data object Journal : Screen
@@ -149,7 +154,8 @@ fun MainContainer() {
     val showNavigation = routeName.isNotEmpty() && 
                         !routeName.contains("Login") && 
                         !routeName.contains("Signup") &&
-                        !routeName.contains("Chat")
+                        !routeName.contains("Chat") &&
+                        !routeName.contains("Splash")
 
     Scaffold(
         bottomBar = {
@@ -181,52 +187,73 @@ fun CustomBottomAppBar(navController: androidx.navigation.NavHostController) {
         BottomNavScreen.Detox
     )
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-        tonalElevation = 0.dp,
+    Surface(
         modifier = Modifier
-            .height(84.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(32.dp)),
-        windowInsets = WindowInsets(0)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
+            .height(72.dp)
+            .fillMaxWidth()
+            .shadow(
+                elevation = 15.dp,
+                shape = RoundedCornerShape(32.dp),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                spotColor = MaterialTheme.colorScheme.primary
+            ),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+        shape = RoundedCornerShape(32.dp),
+        tonalElevation = 8.dp
     ) {
-        items.forEach { item ->
-            val isSelected = currentDestination?.hierarchy?.any { 
-                it.route?.contains(item.route::class.simpleName ?: "") == true 
-            } == true
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { item ->
+                val isSelected = currentDestination?.hierarchy?.any { 
+                    it.route?.contains(item.route::class.simpleName ?: "") == true 
+                } == true
 
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                icon = { 
-                    Icon(
-                        item.icon, 
-                        contentDescription = item.label,
-                        modifier = Modifier.size(26.dp)
-                    ) 
-                },
-                label = { 
-                    Text(
-                        item.label, 
-                        fontSize = 11.sp, 
-                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                        letterSpacing = 0.5.sp
-                    ) 
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                val animatedScale by animateFloatAsState(
+                    targetValue = if (isSelected) 1.25f else 1.0f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                    label = "scale"
                 )
-            )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(24.dp))
+                        .clickable {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                else Color.Transparent,
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            item.icon,
+                            contentDescription = item.label,
+                            modifier = Modifier
+                                .size(26.dp)
+                                .graphicsLayer(scaleX = animatedScale, scaleY = animatedScale),
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary 
+                                   else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -245,10 +272,36 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
-        enterTransition = { fadeIn(tween(400)) },
-        exitTransition = { fadeOut(tween(400)) }
+        startDestination = Screen.Splash,
+        enterTransition = { 
+            fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)
+            )
+        },
+        exitTransition = { 
+            fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)
+            )
+        },
+        popEnterTransition = { 
+            fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)
+            )
+        },
+        popExitTransition = { 
+            fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)
+            )
+        }
     ) {
+        composable<Screen.Splash> {
+            SplashScreen(onSplashFinished = {
+                val destination = if (authViewModel.isLoggedIn()) Screen.MoodCategory else Screen.Login
+                navController.navigate(destination) {
+                    popUpTo(Screen.Splash) { inclusive = true }
+                }
+            })
+        }
         composable<Screen.Login> {
             LoginScreen(
                 viewModel = authViewModel,
@@ -329,7 +382,9 @@ fun AppNavigation(
                 onBack = { navController.popBackStack() }
             )
         }
-        composable<Screen.Detox> { PlaceholderScreen("Detox") }
+        composable<Screen.Detox> { 
+            DetoxScreen(onBack = { navController.popBackStack() }) 
+        }
         composable<Screen.Analytics> { 
             AnalyticsScreen(
                 viewModel = analyticsViewModel,

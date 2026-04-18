@@ -1,10 +1,13 @@
 package com.example.unfilteredapp.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +41,17 @@ fun RoomsScreen(viewModel: com.example.unfilteredapp.viewmodel.ChatViewModel, on
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sanctuaries", fontWeight = FontWeight.Black) },
+                title = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = com.example.unfilteredapp.R.drawable.logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp).clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Sanctuaries", fontWeight = FontWeight.Black)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 actions = {
                     IconButton(onClick = { viewModel.fetchRooms() }) {
@@ -75,8 +91,23 @@ fun RoomsScreen(viewModel: com.example.unfilteredapp.viewmodel.ChatViewModel, on
                     contentPadding = PaddingValues(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(rooms) { room ->
-                        RoomItem(room = room) { onRoomClick(room) }
+                    itemsIndexed(
+                        items = rooms,
+                        key = { _, room -> room.id }
+                    ) { index, room ->
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.delay(index * 100L)
+                            visible = true
+                        }
+                        
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = fadeIn() + slideInVertically { it / 2 },
+                            modifier = Modifier.animateItem()
+                        ) {
+                            RoomItem(room = room) { onRoomClick(room) }
+                        }
                     }
                 }
             }
@@ -86,17 +117,31 @@ fun RoomsScreen(viewModel: com.example.unfilteredapp.viewmodel.ChatViewModel, on
 
 @Composable
 fun RoomItem(room: Room, onClick: () -> Unit) {
-    val accentColor = when (room.mood_tag) {
-        "happy", "excited" -> Color(0xFFFBDA63)
-        "calm" -> Color(0xFF62F95D)
-        "sad" -> Color(0xFF5D99F9)
-        "frustrated" -> Color(0xFFF83700)
-        else -> MaterialTheme.colorScheme.primary
+    val accentColor = remember(room.mood_tag) {
+        when (room.mood_tag) {
+            "happy", "excited" -> Color(0xFFFBDA63)
+            "calm" -> Color(0xFF62F95D)
+            "sad" -> Color(0xFF5D99F9)
+            "frustrated" -> Color(0xFFF83700)
+            else -> Color(0xFF6750A4)
+        }
     }
 
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+        label = "scale"
+    )
+
     Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        onClick = {
+            isPressed = true
+            onClick()
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer(scaleX = scale, scaleY = scale),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,

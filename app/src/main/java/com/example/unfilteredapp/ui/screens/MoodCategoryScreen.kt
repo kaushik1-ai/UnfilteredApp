@@ -3,6 +3,7 @@ package com.example.unfilteredapp.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -139,26 +141,54 @@ fun MoodCategoryScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // New View Analytics Button
-            OutlinedButton(
-                onClick = onViewAnalytics,
+            // "Something Else" - Minimalist Glass Gradient Button (No Shadow)
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(bottom = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp, 
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                )
+                    .height(62.dp)
+                    .padding(bottom = 4.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.horizontalGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .clickable { onViewAnalytics() },
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.BarChart, contentDescription = null)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    "View My Analytics",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.BarChart,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        "DISCOVER TRENDS",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }
@@ -177,12 +207,23 @@ fun CategoryCard(
     category: MoodCategoryItem,
     onClick: () -> Unit
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.85f)
+            .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(RoundedCornerShape(32.dp))
-            .clickable { onClick() },
+            .clickable { 
+                isPressed = true
+                onClick() 
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {

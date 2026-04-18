@@ -1,0 +1,383 @@
+package com.example.unfilteredapp.ui.screens
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.unfilteredapp.R
+import com.example.unfilteredapp.data.model.PlaceResult
+import com.example.unfilteredapp.viewmodel.PlacesViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.*
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("MissingPermission")
+@Composable
+fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    
+    val places by viewModel.places.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    val singapore = LatLng(1.3521, 103.8198) // Default coordinate
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(singapore, 14f)
+    }
+
+    var selectedPlace by remember { mutableStateOf<PlaceResult?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+    var showSheet by remember { mutableStateOf(false) }
+
+    var locationPermissionGranted by remember { 
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        ) 
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        locationPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    LaunchedEffect(Unit) {
+        if (!locationPermissionGranted) {
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
+        }
+    }
+
+    LaunchedEffect(locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    val userLocation = LatLng(it.latitude, it.longitude)
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(userLocation, 14f)
+                }
+            }
+        }
+    }
+
+    // Research-based categories for genuine mental detox
+    val filters = listOf(
+        FilterItem("Parks", Icons.Default.Park, "park", Color(0xFF4CAF50)),
+        FilterItem("Libraries", Icons.Default.MenuBook, "library", Color(0xFF795548)),
+        FilterItem("Museums", Icons.Default.Museum, "museum", Color(0xFF673AB7)),
+        FilterItem("Spas", Icons.Default.Spa, "spa", Color(0xFFE91E63)),
+        FilterItem("Cafes", Icons.Default.Coffee, "cafe", Color(0xFFFF9800)),
+        FilterItem("Bookstores", Icons.Default.AutoStories, "book_store", Color(0xFF3F51B5)),
+        FilterItem("Yoga", Icons.Default.SelfImprovement, "gym", Color(0xFF00BCD4))
+    )
+    
+    var selectedFilterItem by remember { mutableStateOf(filters[0]) }
+
+    LaunchedEffect(selectedFilterItem, cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val target = cameraPositionState.position.target
+            viewModel.fetchNearbyPlaces(target.latitude, target.longitude, selectedFilterItem.apiType)
+        }
+    }
+
+    val mapProperties by remember(locationPermissionGranted) { 
+        mutableStateOf(MapProperties(
+            isMyLocationEnabled = locationPermissionGranted,
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
+        )) 
+    }
+
+    val uiSettings by remember { 
+        mutableStateOf(MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)) 
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+            properties = mapProperties
+        ) {
+            places.forEach { place ->
+                MarkerComposable(
+                    state = MarkerState(position = LatLng(place.geometry.location.lat, place.geometry.location.lng)),
+                    onClick = {
+                        selectedPlace = place
+                        showSheet = true
+                        true
+                    }
+                ) {
+                    CustomMarkerIcon(selectedFilterItem.color, selectedFilterItem.icon)
+                }
+            }
+        }
+
+        // Top UI Overlay
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(16.dp)
+        ) {
+            // Header Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(12.dp, RoundedCornerShape(28.dp)),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Digital Detox",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                letterSpacing = (-0.5).sp
+                            )
+                            Text(
+                                text = "Unplug and explore ${selectedFilterItem.label.lowercase()}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        Box(contentAlignment = Alignment.Center) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 3.dp,
+                                    color = selectedFilterItem.color
+                                )
+                            } else {
+                                IconButton(
+                                    onClick = { /* Search this area */ },
+                                    modifier = Modifier.background(selectedFilterItem.color.copy(alpha = 0.1f), CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = null, tint = selectedFilterItem.color)
+                                }
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Premium Filter Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        filters.forEach { item ->
+                            val isSelected = selectedFilterItem == item
+                            Surface(
+                                onClick = { selectedFilterItem = item },
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (isSelected) item.color else item.color.copy(alpha = 0.05f),
+                                modifier = Modifier.animateContentSize()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = if (isSelected) Color.White else item.color
+                                    )
+                                    if (isSelected) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = item.label,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Floating Action Buttons
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FloatingActionButton(
+                onClick = { 
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        location?.let {
+                            cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 15f))
+                        }
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(Icons.Default.MyLocation, contentDescription = "My Location")
+            }
+            
+            FloatingActionButton(
+                onClick = { /* Search */ },
+                containerColor = selectedFilterItem.color,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            }
+        }
+    }
+
+    // Detail Bottom Sheet
+    if (showSheet && selectedPlace != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            PlaceDetailContent(selectedPlace!!, selectedFilterItem)
+        }
+    }
+}
+
+@Composable
+fun CustomMarkerIcon(color: Color, icon: ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .background(color, RoundedCornerShape(14.dp))
+            .border(2.dp, Color.White, RoundedCornerShape(14.dp))
+            .shadow(4.dp, RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = Color.White
+        )
+    }
+}
+
+@Composable
+fun PlaceDetailContent(place: PlaceResult, category: FilterItem) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 48.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                color = category.color.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    category.icon,
+                    contentDescription = null,
+                    modifier = Modifier.padding(8.dp).size(24.dp),
+                    tint = category.color
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = place.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = category.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = category.color
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = place.vicinity ?: "Address not available",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = { /* Directions */ },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = category.color),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(Icons.Default.Navigation, contentDescription = null)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("Get Directions", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+data class FilterItem(
+    val label: String,
+    val icon: ImageVector,
+    val apiType: String,
+    val color: Color
+)

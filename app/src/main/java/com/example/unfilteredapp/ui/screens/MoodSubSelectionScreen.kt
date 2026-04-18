@@ -1,11 +1,13 @@
 package com.example.unfilteredapp.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -91,11 +94,26 @@ fun MoodSubSelectionScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(moods) { mood ->
-                    MuseumMoodCard(
-                        moodItem = mood,
-                        onClick = { onMoodSelected("$modeType:${mood.subTitle}") }
-                    )
+                itemsIndexed(
+                    items = moods,
+                    key = { _, mood -> mood.subTitle + mood.modeType }
+                ) { index, mood ->
+                    var visible by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(index % 10 * 50L) // Staggered entrance
+                        visible = true
+                    }
+
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.8f, animationSpec = tween(400)),
+                        modifier = Modifier.animateItem()
+                    ) {
+                        MuseumMoodCard(
+                            moodItem = mood,
+                            onClick = { onMoodSelected("$modeType:${mood.subTitle}") }
+                        )
+                    }
                 }
             }
         }
@@ -107,20 +125,33 @@ fun MuseumMoodCard(
     moodItem: MoodSubType,
     onClick: () -> Unit
 ) {
-    val accentColor = try {
-        Color(android.graphics.Color.parseColor(moodItem.lColor))
-    } catch (e: Exception) {
-        MaterialTheme.colorScheme.primary
+    val accentColor = remember(moodItem.lColor) {
+        try {
+            Color(android.graphics.Color.parseColor(moodItem.lColor))
+        } catch (e: Exception) {
+            Color(0xFF62F95D) // Default fallback
+        }
     }
+
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "scale"
+    )
 
     // Flat Museum Design: High contrast, No shadows, Rounded geometric shapes
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f) // Square grid for a modern look
+            .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(RoundedCornerShape(32.dp))
             .background(accentColor)
-            .clickable { onClick() }
+            .clickable { 
+                isPressed = true
+                onClick() 
+            }
             .padding(20.dp)
     ) {
         Column(

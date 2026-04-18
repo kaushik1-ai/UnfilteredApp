@@ -1,51 +1,57 @@
+# Unfiltered
 
-## UNFILTERED
+Unfiltered is a modern Android application designed for emotional well-being, featuring interactive journaling, real-time community chat, and location-based "Detox" suggestions. Built with **Jetpack Compose** and a **Node.js/PostgreSQL** backend.
 
-### UPDATE 1
+## 🚀 Features
 
-## Core App Functionality & Compose UI
-The app is developed using Jetpack Compose with multiple screens such as Journal, Mood, Music, Rooms, and Detox, all connected through Navigation Compose. It uses Scaffold for overall layout structure and LazyColumn for displaying dynamic journal entries efficiently. Material 3 components such as NavigationBar, Cards, Buttons, and OutlinedTextField help create a clean, modern, and user-friendly UI.
+- **Real-time Sanctuaries**: Interactive chat rooms built with **Socket.io** for real-time community support.
+- **Detox & Explore**: Location-aware suggestions for parks, cafes, and gyms using **Google Maps & Places API** to help users disconnect and recharge.
+- **Dynamic Journaling**: Expressive mood logging and journaling with a rich, modern UI.
+- **Secure Authentication**: Full registration and login flow with token-based security.
+- **Premium UI**: Crafted with Material 3, custom animations, and a sleek dark-themed design system.
 
-## State Management, ViewModel, and Architecture
-The application follows a basic MVVM architecture, where ViewModels such as JournalViewModel and MoodViewModel manage UI-related data. State is handled using StateFlow and observed in composables through collectAsState(), ensuring reactive UI updates. This creates a clear separation between UI and logic, improving maintainability and scalability.
+## 🛠️ Setup & Installation
 
-## Navigation & App Flow
-Navigation is implemented using Navigation Compose with a sealed Screen class for type-safe routing. The app provides a smooth and logical flow from authentication screens to core features, with arguments such as mood type passed between screens where needed. A bottom navigation bar enables intuitive and seamless switching between the main sections of the app.
+To run this project locally, you need to set up your environment variables and API keys.
 
-## Integration Progress Toward Requirements
+### 1. Google Maps API Key
+This project uses the **Secrets Gradle Plugin** to keep API keys secure.
+1. Create a `local.properties` file in the root directory (if it doesn't exist).
+2. Add your Google Maps API key:
+   ```properties
+   MAPS_API_KEY=YOUR_API_KEY_HERE
+   ```
 
-### API Integration
-Basic backend API integration has been implemented using REST endpoints for authentication. The app communicates with endpoints such as `/register`, `/login`, and `/me`, establishing a working foundation for user authentication and data exchange.
+### 2. Backend Configuration
+Ensure you have the [Unfiltered Backend](https://github.com/vidney14/UnfilteredApp-Backend) running.
+Update the `BASE_URL` in `NetworkConstants.kt` if your backend is hosted non-locally:
+```kotlin
+const val BASE_URL = "http://10.0.2.2:3000/" // Default for Android Emulator
+```
 
-### Data Persistence Plan / Early Implementation
-The project uses PostgreSQL as the primary database for storing user and application data. A structured backend setup is in place, providing a scalable foundation for persistent data handling.
+## 🏗️ Architecture
 
-### Sensor Integration
-The application uses the device microphone as a sensor for voice-based journaling. Permission handling for audio recording has been implemented, and basic functionality is in place, with future plans for full voice-to-text integration.
+- **UI**: Jetpack Compose (100% Kotlin)
+- **Architecture**: MVVM (Model-View-ViewModel)
+- **Networking**: Retrofit & OkHttp
+- **Real-time**: Socket.io
+- **Dependency Management**: Gradle Version Catalog (libs.versions.toml)
+- **Local Persistence**: SharedPreferences (Auth Tokens)
 
-### Location / Maps
-Google Maps integration has been initiated using a static map API to display location-based content. Basic map rendering is implemented, serving as a foundation for future interactive and location-aware features.
+## 📸 Screenshots
 
-## Responsible Use of AI 
-Practical Use in Development -
-Debugging Compose navigation & state issues
-Understanding StateFlow + ViewModel usage
+<p align="center">
+  <img width="250" alt="Signup" src="https://github.com/user-attachments/assets/45d6ef45-a7eb-478a-acf0-d9baaa12e305" />
+  <img width="250" alt="Mood" src="https://github.com/user-attachments/assets/15c872f1-e783-4264-8957-806a948f48be" />
+  <img width="250" alt="Rooms" src="https://github.com/user-attachments/assets/bfb9d27e-a2b5-4d1c-913b-0ec2fd656a90" />
+</p>
 
-Critical Filtering -
-Rejected generic or irrelevant suggestions
-Verified outputs before applying
-Adapted solutions to fit NavHost + MVVM structure
+## 🤖 Responsible Use of AI
 
-Controlled Usage -
-AI used as a support tool, not a replacement
-Final decisions and implementation done manually
+AI tools were utilized to accelerate development in the following ways:
+- **Architecture**: Refining MVVM patterns and StateFlow management.
+- **Animations**: Implementing smooth transitions and micro-interactions in Compose.
+- **Security**: Implementing best practices for API key management and authentication flows.
+- **Problem Solving**: Debugging WebSocket connectivity and complex UI layouts.
 
-## Screenshots 
-<img width="300" height="600" alt="Screenshot_20260407_154250" src="https://github.com/user-attachments/assets/45d6ef45-a7eb-478a-acf0-d9baaa12e305" />
-
-<img width="300" height="600" alt="Screenshot_20260407_144501" src="https://github.com/user-attachments/assets/15c872f1-e783-4264-8957-806a948f48be" />
-
-<img width="300" height="600" alt="Screenshot_20260407_144412" src="https://github.com/user-attachments/assets/bfb9d27e-a2b5-4d1c-913b-0ec2fd656a90" />
-<img width="300" height="600" alt="Screenshot_20260407_153455" src="https://github.com/user-attachments/assets/9e5f83d9-da3d-4743-90a3-47106f1c3de3" />
-<img width="300" height="600" alt="Screenshot_20260407_153503" src="https://github.com/user-attachments/assets/f7571260-bff4-4c8f-84c1-41a62021ce36" />
-<img width="300" height="600" alt="Screenshot_20260407_153508" src="https://github.com/user-attachments/assets/4b7d2127-ec19-4d74-a24c-4a4c846174d2" />
+*All AI-generated code was reviewed, debugged, and integrated manually to ensure project integrity.*

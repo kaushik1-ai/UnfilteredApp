@@ -60,17 +60,19 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun login(email: String, otp: String) {
+    fun login(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val response = repository.login(AuthRequest(email, otp))
+                val response = repository.login(AuthRequest(email.trim(), password.trim()))
                 if (response.isSuccessful) {
                     val authResponse = response.body()
-                    if (authResponse != null) {
+                    if (authResponse?.token != null) {
                         repository.saveToken(authResponse.token)
                         _currentUser.value = authResponse.user
                         _authState.value = AuthState.Authenticated(authResponse.token)
+                    } else {
+                        _authState.value = AuthState.Error("Login failed: No token received")
                     }
                 } else {
                     _authState.value = AuthState.Error("Login failed")
@@ -81,20 +83,22 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun register(name: String, email: String) {
+    fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val response = repository.register(RegistrationRequest(name, email))
+                val response = repository.register(
+                    RegistrationRequest(name.trim(), email.trim(), password.trim())
+                )
                 if (response.isSuccessful) {
                     val authResponse = response.body()
                     if (authResponse != null) {
-                        repository.saveToken(authResponse.token)
-                        _currentUser.value = authResponse.user
-                        _authState.value = AuthState.Authenticated(authResponse.token)
+                        // Registration success - doesn't return token, user must log in
+                        _authState.value = AuthState.RegistrationSuccess
                     }
                 } else {
-                    _authState.value = AuthState.Error("Registration failed")
+                    val errorBody = response.errorBody()?.string()
+                    _authState.value = AuthState.Error(errorBody ?: "Registration failed")
                 }
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Error")

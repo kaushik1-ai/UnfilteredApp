@@ -5,18 +5,19 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AuthRequest(
     val email: String,
-    val otp: String
+    val password: String
 )
 
 @Serializable
 data class RegistrationRequest(
     val name: String,
-    val email: String
+    val email: String,
+    val password: String
 )
 
 @Serializable
 data class AuthResponse(
-    val token: String, // Made non-nullable
+    val token: String? = null,
     val message: String? = null,
     val user: User
 )

@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.unit.*
+import com.example.unfilteredapp.R
 import com.example.unfilteredapp.viewmodel.AuthState
 import com.example.unfilteredapp.viewmodel.AuthViewModel
 
@@ -59,21 +61,13 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             // App Branding
-            Surface(
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                tonalElevation = 8.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        "U",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(24.dp))
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 

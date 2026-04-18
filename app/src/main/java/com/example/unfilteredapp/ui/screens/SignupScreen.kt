@@ -15,10 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.unfilteredapp.R
 import com.example.unfilteredapp.viewmodel.AuthState
 import com.example.unfilteredapp.viewmodel.AuthViewModel
 
@@ -60,6 +64,16 @@ fun SignupScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "Join Us",
                 style = MaterialTheme.typography.displaySmall.copy(
@@ -139,7 +153,7 @@ fun SignupScreen(
             Button(
                 onClick = { 
                     if (password == confirmPassword) {
-                        viewModel.register(name, email)
+                        viewModel.register(name, email, password)
                     }
                 },
                 modifier = Modifier
