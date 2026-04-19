@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.filled.SentimentDissatisfied
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,17 +30,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.unfilteredapp.ui.theme.SanctuaryDesign
+import com.example.unfilteredapp.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoodCategoryScreen(
     onCategorySelected: (String) -> Unit,
     onViewAnalytics: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
+    val currentUser by authViewModel.currentUser.collectAsState()
     val categories = listOf(
         MoodCategoryItem(
             "High Energy\nPleasant", 
@@ -69,126 +75,118 @@ fun MoodCategoryScreen(
         )
     )
 
-    Scaffold(
-        topBar = {
-            LargeTopAppBar(
-                title = { 
-                    Text(
-                        "How are you\nfeeling today?", 
-                        fontWeight = FontWeight.ExtraBold,
-                        lineHeight = 36.sp
-                    ) 
-                },
-                actions = {
-                    IconButton(onClick = onLogout) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
+    SanctuaryDesign.GlassyBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                SanctuaryDesign.SanctuaryTopBar(
+                    title = "Hello, ${currentUser?.name?.split(" ")?.firstOrNull() ?: "there"}",
+                    subtitle = "How are you feeling today?",
+                    actions = {
+                        IconButton(
+                            onClick = onLogout,
+                            modifier = Modifier.background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f), CircleShape)
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Logout, 
                                 contentDescription = "Logout",
-                                modifier = Modifier.padding(8.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background
                 )
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 20.dp),
-        ) {
-            Text(
-                text = "Select a quadrant to explore your emotions",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.weight(1f)
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp),
             ) {
-                itemsIndexed(categories) { index, category ->
-                    var visible by remember { mutableStateOf(false) }
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(index * 100L)
-                        visible = true
-                    }
-                    
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn() + slideInVertically { it / 2 }
-                    ) {
-                        CategoryCard(category) {
-                            onCategorySelected(category.modeType)
+                Text(
+                    text = "Select a quadrant to explore your emotions",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    itemsIndexed(categories) { index, category ->
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.delay(index * 100L)
+                            visible = true
+                        }
+                        
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = fadeIn() + slideInVertically { it / 2 }
+                        ) {
+                            CategoryCard(category) {
+                                onCategorySelected(category.modeType)
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // "Something Else" - Minimalist Glass Gradient Button (No Shadow)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(62.dp)
-                    .padding(bottom = 4.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+                // "Something Else" - Minimalist Glass Gradient Button (No Shadow)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(62.dp)
+                        .padding(bottom = 4.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+                                )
                             )
                         )
-                    )
-                    .border(
-                        width = 1.dp,
-                        brush = Brush.horizontalGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                    .clickable { onViewAnalytics() },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.horizontalGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .clickable { onViewAnalytics() },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.BarChart,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        "DISCOVER TRENDS",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 2.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.BarChart,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            "DISCOVER TRENDS",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 2.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

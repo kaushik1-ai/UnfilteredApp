@@ -43,6 +43,8 @@ import com.example.unfilteredapp.data.repository.JournalRepository
 import com.example.unfilteredapp.viewmodel.JournalViewModel
 import com.example.unfilteredapp.viewmodel.ChatViewModel
 import com.example.unfilteredapp.data.repository.ChatRepository
+import com.example.unfilteredapp.data.repository.SpotifyRepository
+import com.example.unfilteredapp.viewmodel.MusicViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -136,6 +138,15 @@ fun MainContainer() {
         }
     )
 
+    val musicViewModel: MusicViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return MusicViewModel(SpotifyRepository()) as T
+            }
+        }
+    )
+
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -169,7 +180,7 @@ fun MainContainer() {
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            AppNavigation(navController, authViewModel, analyticsViewModel, journalViewModel, chatViewModel)
+            AppNavigation(navController, authViewModel, analyticsViewModel, journalViewModel, chatViewModel, musicViewModel)
         }
     }
 }
@@ -187,9 +198,15 @@ fun CustomBottomAppBar(navController: androidx.navigation.NavHostController) {
         BottomNavScreen.Detox
     )
 
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+    ) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 24.dp, vertical = 20.dp)
+            .padding(horizontal = 24.dp)
+            .padding(top = 8.dp, bottom = 12.dp)
             .height(72.dp)
             .fillMaxWidth()
             .shadow(
@@ -256,6 +273,7 @@ fun CustomBottomAppBar(navController: androidx.navigation.NavHostController) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -264,7 +282,8 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     analyticsViewModel: MoodAnalyticsViewModel,
     journalViewModel: JournalViewModel,
-    chatViewModel: ChatViewModel
+    chatViewModel: ChatViewModel,
+    musicViewModel: MusicViewModel
 ) {
     val moodViewModel: MoodViewModel = viewModel()
     
@@ -330,7 +349,8 @@ fun AppNavigation(
                     navController.navigate(Screen.MoodSubSelection(modeType))
                 },
                 onViewAnalytics = { navController.navigate(Screen.Analytics) },
-                onLogout = { authViewModel.logout() }
+                onLogout = { authViewModel.logout() },
+                authViewModel = authViewModel
             )
         }
         composable<Screen.MoodSubSelection> { backStackEntry ->
@@ -361,7 +381,15 @@ fun AppNavigation(
         composable<Screen.Journal> {
             JournalScreen(onBack = { navController.popBackStack() }, viewModel = journalViewModel)
         }
-        composable<Screen.Music> { PlaceholderScreen("Music") }
+        composable<Screen.Music> {
+            val selectedMood by moodViewModel.selectedMood.collectAsState()
+            val finalMood = selectedMood?.split(":")?.getOrNull(1) ?: "Calm"
+            MusicScreen(
+                viewModel = musicViewModel,
+                mood = finalMood,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
         composable<Screen.Rooms> { 
             RoomsScreen(viewModel = chatViewModel, onRoomClick = { room ->
                 navController.navigate(Screen.Chat(room.id, room.name, room.mood_tag, room.description))

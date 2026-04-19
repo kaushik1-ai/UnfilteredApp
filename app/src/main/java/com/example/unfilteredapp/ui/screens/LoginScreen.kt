@@ -35,7 +35,7 @@ fun LoginScreen(
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.LoginSuccess) {
+        if (authState is AuthState.Authenticated) {
             onLoginSuccess()
             viewModel.resetState()
         }

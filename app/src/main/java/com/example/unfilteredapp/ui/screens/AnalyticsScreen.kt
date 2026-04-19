@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.unfilteredapp.data.model.MoodCount
 import com.example.unfilteredapp.data.model.MoodLogEntry
+import com.example.unfilteredapp.ui.theme.SanctuaryDesign
 import com.example.unfilteredapp.viewmodel.AnalyticsState
 import com.example.unfilteredapp.viewmodel.MoodAnalyticsViewModel
 
@@ -42,78 +43,58 @@ fun AnalyticsScreen(
         viewModel.fetchAnalytics(7)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Insights", 
-                        fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.titleLarge
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack, 
-                                contentDescription = "Back",
-                                modifier = Modifier.padding(8.dp)
-                            )
+    SanctuaryDesign.GlassyBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                SanctuaryDesign.SanctuaryTopBar(
+                    title = "Insights",
+                    subtitle = "Your emotional patterns",
+                    navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                    onNavigationClick = onBack,
+                    actions = {
+                        IconButton(onClick = { viewModel.fetchAnalytics(7) }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                         }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.fetchAnalytics(7) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
                 )
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            when (val currentState = state) {
-                is AnalyticsState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(strokeWidth = 3.dp)
-                    }
-                }
-                is AnalyticsState.Error -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center).padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = currentState.message,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.fetchAnalytics(7) }) {
-                            Text("Try Again")
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                when (val currentState = state) {
+                    is AnalyticsState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary)
                         }
                     }
+                    is AnalyticsState.Error -> {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = currentState.message,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            SanctuaryDesign.PrimaryButton(text = "Try Again", onClick = { viewModel.fetchAnalytics(7) })
+                        }
+                    }
+                    is AnalyticsState.Success -> {
+                        AnalyticsContent(
+                            totalLogs = currentState.data.totalLogs,
+                            counts = currentState.data.moodCounts, 
+                            logs = currentState.data.dailyLogs
+                        )
+                    }
+                    else -> {}
                 }
-                is AnalyticsState.Success -> {
-                    AnalyticsContent(
-                        totalLogs = currentState.data.totalLogs,
-                        counts = currentState.data.moodCounts, 
-                        logs = currentState.data.dailyLogs
-                    )
-                }
-                else -> {}
             }
         }
     }
@@ -122,29 +103,27 @@ fun AnalyticsScreen(
 @Composable
 fun AnalyticsContent(totalLogs: Int, counts: List<MoodCount>, logs: List<MoodLogEntry>) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 100.dp)
     ) {
-        // Summary Card
         item {
             TotalLogsCard(totalLogs)
         }
 
         item {
-            Text(
-                "Energy Distribution",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                "Breakdown of your moods in the last 7 days",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column {
+                Text(
+                    "Energy Distribution",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Breakdown of your moods in the last 7 days",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         item {
@@ -194,27 +173,12 @@ fun AnalyticsContent(totalLogs: Int, counts: List<MoodCount>, logs: List<MoodLog
 
 @Composable
 fun TotalLogsCard(count: Int) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.primary
+    SanctuaryDesign.SanctuaryCard(
+        backgroundColor = MaterialTheme.colorScheme.primary,
+        contentColor = Color.White
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                )
-                .padding(24.dp)
-        ) {
-            Column(modifier = Modifier.align(Alignment.CenterStart)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column {
                 Text(
                     "Check-ins",
                     color = Color.White.copy(alpha = 0.8f),
@@ -230,11 +194,11 @@ fun TotalLogsCard(count: Int) {
             Icon(
                 Icons.Default.BarChart,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.2f),
+                tint = Color.White.copy(alpha = 0.15f),
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(90.dp)
                     .align(Alignment.CenterEnd)
-                    .offset(x = 20.dp)
+                    .offset(x = 10.dp)
             )
         }
     }
@@ -244,68 +208,60 @@ fun TotalLogsCard(count: Int) {
 fun MoodDistributionChart(counts: List<MoodCount>) {
     val total = counts.sumOf { it.count }.toFloat()
     
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            if (counts.isEmpty()) {
-                Text(
-                    "Start logging to build your profile.", 
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                counts.forEach { item ->
-                    val progress = if (total > 0) item.count / total else 0f
-                    val color = when (item.modeType) {
-                        "high_energy_pleasant" -> Color(0xFFFBDA63)
-                        "low_energy_pleasant" -> Color(0xFF62F95D)
-                        "low_energy_unpleasant" -> Color(0xFF5D99F9)
-                        else -> Color(0xFFF83700)
-                    }
+    SanctuaryDesign.SanctuaryCard {
+        if (counts.isEmpty()) {
+            Text(
+                "Start logging to build your profile.", 
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        } else {
+            counts.forEachIndexed { index, item ->
+                val progress = if (total > 0) item.count / total else 0f
+                val color = when (item.modeType) {
+                    "high_energy_pleasant" -> Color(0xFFFBDA63)
+                    "low_energy_pleasant" -> Color(0xFF62F95D)
+                    "low_energy_unpleasant" -> Color(0xFF5D99F9)
+                    else -> Color(0xFFF83700)
+                }
 
-                    Column(modifier = Modifier.padding(vertical = 10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = item.modeType.replace("_", " ").uppercase(),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                letterSpacing = 1.sp
-                            )
-                            Text(
-                                text = "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = color
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
+                Column(modifier = Modifier.padding(vertical = 10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = item.modeType.replace("_", " ").uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = color
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(12.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(14.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(progress)
-                                    .fillMaxHeight()
-                                    .clip(RoundedCornerShape(50))
-                                    .background(color)
-                            )
-                        }
+                                .fillMaxWidth(progress)
+                                .fillMaxHeight()
+                                .clip(CircleShape)
+                                .background(color)
+                        )
                     }
                 }
             }
@@ -321,48 +277,27 @@ fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vector.Image
     ) {
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(28.dp)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+            modifier = Modifier.size(32.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    icon, 
-                    contentDescription = null, 
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(14.dp)
-                )
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold
-        )
+        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
     }
 }
 
 @Composable
 fun InsightCard(title: String, description: String, accentColor: Color) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
+    SanctuaryDesign.SanctuaryCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(4.dp, 40.dp)
-                    .clip(CircleShape)
-                    .background(accentColor)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp, 40.dp).clip(CircleShape).background(accentColor))
             Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -379,16 +314,8 @@ fun RecentLogItem(log: MoodLogEntry) {
         else -> Color(0xFFF83700)
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    SanctuaryDesign.SanctuaryCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(16.dp),
@@ -405,11 +332,7 @@ fun RecentLogItem(log: MoodLogEntry) {
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    log.modeSubType, 
-                    fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(log.modeSubType, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     log.modeType.replace("_", " ").uppercase(),
                     style = MaterialTheme.typography.labelSmall,

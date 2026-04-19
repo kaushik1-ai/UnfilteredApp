@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.unfilteredapp.data.model.MoodData
 import com.example.unfilteredapp.data.model.MoodSubType
+import com.example.unfilteredapp.ui.theme.SanctuaryDesign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,24 +41,15 @@ fun MoodSubSelectionScreen(
         modeType.replace("_", " ").uppercase()
     }
 
+    SanctuaryDesign.GlassyBackground {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        displayTitle, 
-                        fontWeight = FontWeight.ExtraBold, 
-                        fontSize = 14.sp,
-                        letterSpacing = 2.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+            SanctuaryDesign.SanctuaryTopBar(
+                title = displayTitle,
+                subtitle = "Select the precise emotion that defines your current frequency.",
+                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                onNavigationClick = onBack
             )
         }
     ) { padding ->
@@ -65,10 +57,9 @@ fun MoodSubSelectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
         ) {
             // Editorial Header
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
                 Text(
                     "Identify your state.",
                     fontSize = 40.sp,
@@ -79,7 +70,7 @@ fun MoodSubSelectionScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Select the precise emotion that defines your current frequency in the $displayTitle quadrant.",
+                    "Select the precise emotion in the $displayTitle quadrant.",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp
@@ -118,6 +109,7 @@ fun MoodSubSelectionScreen(
             }
         }
     }
+    } // end GlassyBackground
 }
 
 @Composable

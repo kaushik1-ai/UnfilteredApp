@@ -48,7 +48,7 @@ import com.google.maps.android.compose.*
 fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    
+
     val places by viewModel.places.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -58,14 +58,15 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
         position = CameraPosition.fromLatLngZoom(singapore, 14f)
     }
 
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var selectedPlace by remember { mutableStateOf<PlaceResult?>(null) }
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
 
-    var locationPermissionGranted by remember { 
+    var locationPermissionGranted by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        ) 
+        )
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -83,12 +84,14 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
         }
     }
 
+    // Get real GPS location and move camera to it
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let {
-                    val userLocation = LatLng(it.latitude, it.longitude)
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(userLocation, 14f)
+                    val loc = LatLng(it.latitude, it.longitude)
+                    userLocation = loc
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(loc, 14f)
                 }
             }
         }
@@ -104,25 +107,24 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
         FilterItem("Bookstores", Icons.Default.AutoStories, "book_store", Color(0xFF3F51B5)),
         FilterItem("Yoga", Icons.Default.SelfImprovement, "gym", Color(0xFF00BCD4))
     )
-    
+
     var selectedFilterItem by remember { mutableStateOf(filters[0]) }
 
-    LaunchedEffect(selectedFilterItem, cameraPositionState.isMoving) {
-        if (!cameraPositionState.isMoving) {
-            val target = cameraPositionState.position.target
-            viewModel.fetchNearbyPlaces(target.latitude, target.longitude, selectedFilterItem.apiType)
-        }
+    // Fetch whenever filter changes OR user location first becomes available
+    LaunchedEffect(selectedFilterItem, userLocation) {
+        val loc = userLocation ?: singapore
+        viewModel.fetchNearbyPlaces(loc.latitude, loc.longitude, selectedFilterItem.apiType)
     }
 
-    val mapProperties by remember(locationPermissionGranted) { 
+    val mapProperties by remember(locationPermissionGranted) {
         mutableStateOf(MapProperties(
             isMyLocationEnabled = locationPermissionGranted,
             mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
-        )) 
+        ))
     }
 
-    val uiSettings by remember { 
-        mutableStateOf(MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)) 
+    val uiSettings by remember {
+        mutableStateOf(MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false))
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -132,16 +134,20 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
             uiSettings = uiSettings,
             properties = mapProperties
         ) {
+            // key() forces MarkerComposable to fully recompose when the selected
+            // filter changes — this fixes the stale icon bug
             places.forEach { place ->
-                MarkerComposable(
-                    state = MarkerState(position = LatLng(place.geometry.location.lat, place.geometry.location.lng)),
-                    onClick = {
-                        selectedPlace = place
-                        showSheet = true
-                        true
+                key(selectedFilterItem.apiType, place.place_id) {
+                    MarkerComposable(
+                        state = MarkerState(position = LatLng(place.geometry.location.lat, place.geometry.location.lng)),
+                        onClick = {
+                            selectedPlace = place
+                            showSheet = true
+                            true
+                        }
+                    ) {
+                        CustomMarkerIcon(selectedFilterItem.color, selectedFilterItem.icon)
                     }
-                ) {
-                    CustomMarkerIcon(selectedFilterItem.color, selectedFilterItem.icon)
                 }
             }
         }
@@ -181,7 +187,7 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
+
                         Box(contentAlignment = Alignment.Center) {
                             if (isLoading) {
                                 CircularProgressIndicator(
@@ -191,7 +197,10 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
                                 )
                             } else {
                                 IconButton(
-                                    onClick = { /* Search this area */ },
+                                    onClick = {
+                                        val loc = userLocation ?: singapore
+                                        viewModel.fetchNearbyPlaces(loc.latitude, loc.longitude, selectedFilterItem.apiType)
+                                    },
                                     modifier = Modifier.background(selectedFilterItem.color.copy(alpha = 0.1f), CircleShape)
                                 ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null, tint = selectedFilterItem.color)
@@ -199,9 +208,9 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     // Premium Filter Row
                     Row(
                         modifier = Modifier
@@ -245,7 +254,7 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
             }
         }
 
-        // Floating Action Buttons
+        // Floating Action Button — My Location only (search removed)
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -253,10 +262,12 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             FloatingActionButton(
-                onClick = { 
+                onClick = {
                     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                         location?.let {
-                            cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 15f))
+                            val loc = LatLng(it.latitude, it.longitude)
+                            userLocation = loc
+                            cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(loc, 15f))
                         }
                     }
                 },
@@ -266,15 +277,6 @@ fun DetoxScreen(onBack: () -> Unit, viewModel: PlacesViewModel = viewModel()) {
                 modifier = Modifier.size(56.dp)
             ) {
                 Icon(Icons.Default.MyLocation, contentDescription = "My Location")
-            }
-            
-            FloatingActionButton(
-                onClick = { /* Search */ },
-                containerColor = selectedFilterItem.color,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Icon(Icons.Default.Search, contentDescription = "Search")
             }
         }
     }
@@ -347,9 +349,9 @@ fun PlaceDetailContent(place: PlaceResult, category: FilterItem) {
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(12.dp))
@@ -359,9 +361,9 @@ fun PlaceDetailContent(place: PlaceResult, category: FilterItem) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Button(
             onClick = { /* Directions */ },
             modifier = Modifier.fillMaxWidth().height(56.dp),

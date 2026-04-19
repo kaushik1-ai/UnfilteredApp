@@ -15,20 +15,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.unfilteredapp.ui.theme.SanctuaryDesign
 import com.example.unfilteredapp.viewmodel.JournalState
 import com.example.unfilteredapp.viewmodel.JournalViewModel
 import java.text.SimpleDateFormat
@@ -72,148 +73,121 @@ fun JournalScreen(onBack: () -> Unit, viewModel: JournalViewModel) {
         viewModel.fetchEntries()
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                Box(contentAlignment = Alignment.Center) {
-                    if (isRecording) {
-                        Surface(
-                            modifier = Modifier.size(64.dp).scale(pulseScale),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        ) {}
+    SanctuaryDesign.GlassyBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                SanctuaryDesign.SanctuaryTopBar(
+                    title = "Reflection",
+                    subtitle = currentDate,
+                    navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                    onNavigationClick = onBack,
+                    actions = {
+                        IconButton(
+                            onClick = { showHistory = true },
+                            modifier = Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "History", tint = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                    FloatingActionButton(
-                        onClick = {
-                            isRecording = true
-                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Holding space for your thoughts...")
-                            }
-                            speechLauncher.launch(intent)
-                        },
-                        containerColor = if (isRecording) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = if (isRecording) Color.White else MaterialTheme.colorScheme.primary,
-                        shape = CircleShape,
-                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 0.dp)
-                    ) {
-                        Icon(Icons.Default.Mic, contentDescription = "Record")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        viewModel.addEntry(textState)
-                        textState = ""
-                    },
-                    expanded = textState.isNotBlank(),
-                    icon = { Icon(Icons.Default.DoneAll, contentDescription = null) },
-                    text = { Text("Preserve", fontWeight = FontWeight.Black) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = RoundedCornerShape(20.dp)
                 )
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Elegant Header Section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            },
+            floatingActionButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isRecording) {
+                            Surface(
+                                modifier = Modifier.size(64.dp).scale(pulseScale),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            ) {}
+                        }
+                        FloatingActionButton(
+                            onClick = {
+                                isRecording = true
+                                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                                    putExtra(RecognizerIntent.EXTRA_PROMPT, "Holding space for your thoughts...")
+                                }
+                                speechLauncher.launch(intent)
+                            },
+                            containerColor = if (isRecording) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = if (isRecording) Color.White else MaterialTheme.colorScheme.primary,
+                            shape = CircleShape,
+                            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 0.dp)
+                        ) {
+                            Icon(Icons.Default.Mic, contentDescription = "Record")
+                        }
                     }
                     
-                    FilledTonalButton(
-                        onClick = { showHistory = true },
-                        shape = RoundedCornerShape(16.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Past Reflections", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                    if (textState.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                viewModel.addEntry(textState)
+                                textState = ""
+                            },
+                            icon = { Icon(Icons.Default.DoneAll, contentDescription = null) },
+                            text = { Text("Preserve", fontWeight = FontWeight.Black) },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            shape = RoundedCornerShape(20.dp)
+                        )
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = currentDate,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-                
-                Text(
-                    text = "Begin your reflection",
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
             }
-
-            Box(
+        ) { padding ->
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
-                TextField(
-                    value = textState,
-                    onValueChange = { textState = it },
-                    placeholder = { 
-                        Text(
-                            "What's the unfiltered truth today?",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
-                                fontWeight = FontWeight.Light
-                            )
-                        ) 
-                    },
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    textStyle = MaterialTheme.typography.headlineSmall.copy(
-                        lineHeight = 34.sp,
-                        fontWeight = FontWeight.Normal
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    TextField(
+                        value = textState,
+                        onValueChange = { textState = it },
+                        placeholder = { 
+                            Text(
+                                "What's the unfiltered truth today?",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                    fontWeight = FontWeight.Light,
+                                    letterSpacing = (-1).sp
+                                )
+                            ) 
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(
+                            lineHeight = 34.sp,
+                            fontWeight = FontWeight.Normal
+                        )
                     )
-                )
+                }
             }
-        }
 
-        if (showHistory) {
-            ModalBottomSheet(
-                onDismissRequest = { showHistory = false },
-                sheetState = sheetState,
-                dragHandle = { BottomSheetDefaults.DragHandle() },
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp
-            ) {
-                HistorySheetContent(journalState)
+            if (showHistory) {
+                ModalBottomSheet(
+                    onDismissRequest = { showHistory = false },
+                    sheetState = sheetState,
+                    dragHandle = { BottomSheetDefaults.DragHandle() },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp
+                ) {
+                    HistorySheetContent(journalState)
+                }
             }
         }
     }
@@ -233,11 +207,11 @@ fun HistorySheetContent(state: JournalState) {
         ) {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(32.dp)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.MenuBook, contentDescription = null, size = 16.dp, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -250,7 +224,7 @@ fun HistorySheetContent(state: JournalState) {
         
         when (state) {
             is JournalState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { 
-                CircularProgressIndicator(strokeWidth = 3.dp) 
+                CircularProgressIndicator(strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary) 
             }
             is JournalState.Success -> {
                 if (state.entries.isEmpty()) {
@@ -265,7 +239,7 @@ fun HistorySheetContent(state: JournalState) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
-                        contentPadding = PaddingValues(bottom = 40.dp)
+                        contentPadding = PaddingValues(bottom = 40.dp, top = 12.dp)
                     ) {
                         itemsIndexed(state.entries) { index, entry ->
                             HistoryItem(entry.content, entry.created_at)
@@ -281,14 +255,8 @@ fun HistorySheetContent(state: JournalState) {
 
 @Composable
 fun HistoryItem(content: String, timestamp: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+    SanctuaryDesign.SanctuaryCard {
+        Column {
             Text(
                 text = timestamp.split("T").firstOrNull() ?: timestamp,
                 style = MaterialTheme.typography.labelLarge,
@@ -304,9 +272,4 @@ fun HistoryItem(content: String, timestamp: String) {
             )
         }
     }
-}
-
-@Composable
-private fun Icon(icon: androidx.compose.ui.graphics.vector.ImageVector, contentDescription: String?, size: androidx.compose.ui.unit.Dp, tint: Color) {
-    Icon(icon, contentDescription, modifier = Modifier.size(size), tint = tint)
 }
