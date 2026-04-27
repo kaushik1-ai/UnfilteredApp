@@ -42,7 +42,7 @@ fun ChatScreen(
     val currentUser by authViewModel.currentUser.collectAsState()
     
     val currentUserId = currentUser?.id ?: 0
-    val currentUserName = currentUser?.name ?: "Anonymous"
+    val currentUserName = currentUser?.name ?: currentUser?.email?.substringBefore('@') ?: "User"
     
     var textState by remember { mutableStateOf("") }
     val listState = rememberLazyListState()

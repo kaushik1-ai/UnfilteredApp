@@ -35,6 +35,6 @@ data class Message(
 ) {
     // Helper properties to get the value regardless of case
     val effectiveUserId: Int get() = user_id_snake ?: user_id_camel ?: 0
-    val effectiveUserName: String get() = user_name_snake ?: user_name_camel ?: "Anonymous"
+    val effectiveUserName: String get() = user_name_snake ?: user_name_camel ?: "User"
     val effectiveRoomId: Int get() = room_id ?: 0
 }
