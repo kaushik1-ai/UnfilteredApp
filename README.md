@@ -175,3 +175,41 @@ UnfilteredApp/
 └── gradle/
     └── libs.versions.toml           # Centralized dependency version catalog
 ```
+## 🤖 AI Usage Statement
+
+AI tools (primarily ChatGPT) were used during the development of this project as a support tool, not as a replacement for understanding.
+
+### 🔹 Where & How AI Was Used
+- Used to **brainstorm feature ideas** (e.g., mood tracking, anonymous chat rooms)
+- Helped in **debugging errors** in Kotlin, API calls, and Gradle issues
+- Assisted in **understanding concepts** like MVVM architecture, StateFlow, and API integration
+- Provided guidance for **UI improvements in Jetpack Compose**
+- Helped refine **README documentation and structure**
+
+### 🔹 Example Prompts
+- "Help me understand this part of my ViewModel code and how data is flowing"
+- "Explain how StateFlow is being used in my app and why it is better than LiveData here"
+- "Where should I store and use API keys like Spotify and Google Maps in my Android project?"
+- "Why is my Retrofit API call not returning data even though the endpoint is correct?"
+- "Help me debug this issue where my UI is not updating after state change"
+- "How do I integrate Socket.io properly for real-time chat in Android?"
+- "What is the correct way to structure MVVM in a multi-screen Compose app?"
+
+### 🔹 Helpfulness
+AI was helpful in:
+- Speeding up debugging and reducing development time  
+- Explaining complex concepts in a simpler way  
+- Suggesting better structure and design approaches  
+
+### 🔹 Limitations & Corrections
+- Some AI suggestions were **generic or not directly compatible** with the project setup  
+- Required **manual modification and debugging** to fit the app’s architecture  
+- Certain API integrations (e.g., Socket.io, Spotify) needed **custom fixes beyond AI suggestions**  
+- Verified outputs using official documentation and testing  
+
+### 🔹 Understanding
+All AI-generated suggestions were **carefully reviewed, tested, and modified** before implementation.  
+The final code reflects my understanding of:
+- MVVM architecture  
+- State management using StateFlow  
+- API integration and asynchronous programming  
