@@ -117,3 +117,61 @@ The application uses a combination of debugging, manual testing, and API validat
 - Render logs monitored for backend errors  
 
 ---
+
+## 📁 Project Structure
+
+```text
+UnfilteredApp/
+├── app/src/main/java/com/example/unfilteredapp/
+│   ├── MainActivity.kt              # Single Activity — sets up nav graph + bottom bar
+│   ├── data/
+│   │   ├── api/
+│   │   │   ├── NetworkConstants.kt  # BASE_URL, SOCKET_URL, MAPS_API_KEY
+│   │   │   ├── AuthApi.kt           # /auth/register, /auth/login, /auth/me
+│   │   │   ├── ChatApi.kt           # /rooms, /rooms/:id/messages
+│   │   │   ├── JournalApi.kt        # /journal
+│   │   │   ├── MoodApi.kt           # /mood/log, /mood/analytics
+│   │   │   ├── PlacesApi.kt         # Google Places Nearby Search
+│   │   │   ├── SpotifyApi.kt        # Spotify /v1/search, /v1/recommendations
+│   │   │   └── SpotifyAuthApi.kt    # Spotify /api/token (Client Credentials)
+│   │   ├── model/
+│   │   │   ├── AuthModels.kt        # AuthRequest, RegistrationRequest, AuthResponse, User
+│   │   │   ├── ChatModels.kt        # Room, Message (handles both snake_case & camelCase)
+│   │   │   ├── JournalModels.kt     # JournalEntryRequest, JournalEntryResponse
+│   │   │   ├── MoodData.kt          # 100+ MoodSubType entries across 4 quadrants
+│   │   │   ├── MoodAnalyticsModels.kt # MoodLogRequest, AnalyticsResponse, DailyLog
+│   │   │   ├── PlaceData.kt         # PlacesResponse, PlaceResult
+│   │   │   └── SpotifyModels.kt     # SpotifyTrack, SpotifySearchResponse
+│   │   └── repository/
+│   │       ├── AuthRepository.kt    # Login, register, token persist (SharedPreferences)
+│   │       ├── ChatRepository.kt    # Fetch rooms & messages
+│   │       ├── JournalRepository.kt # Get/save journal entries
+│   │       ├── MoodRepository.kt    # Log mood, get analytics
+│   │       ├── PlacesRepository.kt  # Nearby places search via Google API
+│   │       └── SpotifyRepository.kt # Client Credentials token + track search
+│   ├── ui/
+│   │   ├── screens/
+│   │   │   ├── SplashScreen.kt      # Animated splash → auto-login check
+│   │   │   ├── LoginScreen.kt       # Email + password login
+│   │   │   ├── SignupScreen.kt      # Name, email, password registration
+│   │   │   ├── MoodCategoryScreen.kt# 4-quadrant mood energy selector
+│   │   │   ├── MoodSubSelectionScreen.kt # Granular mood picker
+│   │   │   ├── MoodSummaryScreen.kt # Summary + navigation after mood pick
+│   │   │   ├── AnalyticsScreen.kt   # 7-day mood analytics charts
+│   │   │   ├── JournalScreen.kt     # Write and view journal entries
+│   │   │   ├── MusicScreen.kt       # Spotify mood-based track recommendations
+│   │   │   ├── RoomsScreen.kt       # List of mood-tagged chat rooms
+│   │   │   ├── ChatScreen.kt        # Real-time Socket.io chat
+│   │   │   └── DetoxScreen.kt       # Google Maps + nearby place categories
+│   │   └── theme/                   # Material 3 color scheme, typography
+│   └── viewmodel/
+│       ├── AuthViewModel.kt         # Login/register/logout + auto-login
+│       ├── ChatViewModel.kt         # Socket.io lifecycle + optimistic UI
+│       ├── JournalViewModel.kt      # Fetch/add journal entries
+│       ├── MoodAnalyticsViewModel.kt# Log mood + fetch analytics
+│       ├── MoodViewModel.kt         # In-memory selected mood state
+│       ├── MusicViewModel.kt        # Spotify track loading by mood
+│       └── PlacesViewModel.kt       # Nearby places via Google Places API
+└── gradle/
+    └── libs.versions.toml           # Centralized dependency version catalog
+```
